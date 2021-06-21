@@ -256,7 +256,7 @@ SELECT hospitalIdx, AdImg FROM Ad ORDER BY createdAt DESC LIMIT 5;
 
 -- 우리의 의견
 SELECT
-       IFNULL(hospitalLogo,-1)AS hospitalLogo,hospitalName,
+       estimateIdx,IFNULL(hospitalLogo,-1)AS hospitalLogo,hospitalName,
        CONCAT(hospitalAddress," ",hospitalAddressDetail)AS hospitalAddress,
        DATE_FORMAT(Estimates.createdAt, '%Y.%m.%d')AS createdAt,
 CONCAT(
@@ -418,3 +418,25 @@ INSERT INTO UserHospitalHearts (userIdx, hospitalIdx) VALUES (?,?);
 UPDATE UserHospitalHearts SET status = IF(status = 0, 1, 0) WHERE userIdx = ? AND hospitalIdx = ?;
 
 SELECT COUNT(CASE WHEN status=1 THEN 1 END)AS heartStatus FROM UserHospitalHearts WHERE userIdx = ? AND hospitalIdx = ?;
+
+-- 병원이야기 상단
+SELECT storyImg,storyTitle,storySubTitle FROM HospitalStory WHERE hospitalIdx = ? AND status = 1 AND storyFixed = 'Y' ORDER BY createdAt desc
+limit 1;
+
+-- 병원로고, 병원 이름
+SELECT hospitalLogo,hospitalName FROM Hospitals WHERE hospitalIdx = ?;
+
+-- 병원 이야기 가져오기
+SELECT DATE_FORMAT(createdAt,'%Y.%m.%d')AS createdAt,storyImg,storyTitle,story,storySubTitle FROM HospitalStory WHERE hospitalIdx = ? AND status = 1 ORDER BY createdAt DESC
+LIMIT ?,?;
+
+
+INSERT INTO Reviews(hospitalIdx, userIdx, review, reviewScore) VALUES (1,1,"최고",3.7);
+
+SELECT LAST_INSERT_ID() AS reviewIdx;
+
+SELECT reviewIdx FROM Reviews WHERE hospitalIdx = ? AND userIdx=? AND review = ? AND reviewScore = ?;
+
+INSERT INTO ReviewImg(reviewIdx, reviewImg) VALUES (?,?);
+
+
