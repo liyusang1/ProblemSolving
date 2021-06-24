@@ -396,8 +396,8 @@ CREATE TABLE HospitalClosedDay
 ALTER TABLE HospitalClosedDay COMMENT '병원 정기 휴무일';
 
 -- 병원 정보
-SELECT hospitalImg,hospitalLogo,hospitalName,CONCAT(hospitalAddress," ",hospitalAddressDetail)AS hospitalAddress,
-       hospitalInfo,hospitalPhonenumber,
+SELECT IFNULL(hospitalImg,-1) AS hospitalImg,IFNULL(hospitalLogo,-1) AS hospitalLogo,hospitalName,CONCAT(hospitalAddress," ",hospitalAddressDetail)AS hospitalAddress,
+       IFNULL(hospitalInfo,-1) AS hospitalInfo,hospitalPhonenumber,
        DATE_FORMAT(hospitalStratTime,'%H:%i')AS hospitalStratTime,
        DATE_FORMAT(hospitalEndTime,'%H:%i')AS hospitalEndTime,
        hospitalHoliday,monClosed,tueClosed,wedClosed,tueClosed,friClosed,satClosed,sunClosed
@@ -440,3 +440,10 @@ SELECT reviewIdx FROM Reviews WHERE hospitalIdx = ? AND userIdx=? AND review = ?
 INSERT INTO ReviewImg(reviewIdx, reviewImg) VALUES (?,?);
 
 
+INSERT INTO Hospitals(subjectIdx,hospitalName,hospitalAddress,hospitalAddressDetail,hospitalPhonenumber,hospitalLatitude,hospitalLongitude)
+VALUES (?,?,?,?,?,?,?);
+
+INSERT INTO HospitalClosedDay(hospitalIdx) VALUES (?);
+
+ALTER TABLE Hospitals AUTO_INCREMENT 42;
+ALTER TABLE HospitalClosedDay AUTO_INCREMENT 42;
