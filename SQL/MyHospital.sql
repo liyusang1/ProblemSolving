@@ -447,3 +447,31 @@ INSERT INTO HospitalClosedDay(hospitalIdx) VALUES (?);
 
 ALTER TABLE Hospitals AUTO_INCREMENT 42;
 ALTER TABLE HospitalClosedDay AUTO_INCREMENT 42;
+ALTER TABLE UserAreas AUTO_INCREMENT 1;
+
+SELECT userIdx FROM Reviews WHERE reviewIdx = ?;
+UPDATE Reviews SET status = 0 WHERE reviewIdx = ?
+
+
+    SELECT
+
+    reviewIdx,reviewScore,DATE_FORMAT(createdAt,'%Y.%m.%d')AS createdAt,review,
+    IFNULL((SELECT reviewImg FROM ReviewImg WHERE Reviews.reviewIdx = ReviewImg.reviewIdx
+        AND reviewImgIdx IN (SELECT MAX(reviewImgIdx) FROM ReviewImg WHERE Reviews.reviewIdx = ReviewImg.reviewIdx)
+    ),-1)AS reviewImg,
+    (SELECT COUNT(reviewImg) FROM ReviewImg WHERE Reviews.reviewIdx = ReviewImg.reviewIdx)AS reviewImgCount
+
+    FROM Reviews
+    WHERE hospitalIdx = ? AND status = 1 LIMIT ?,?;
+
+DELETE FROM Reviews WHERE reviewIdx = ?;
+
+DELETE FROM ReviewImg WHERE reviewIdx = ?;
+
+UPDATE Reviews SET review = ?, reviewScore = ? WHERE reviewIdx = ?;
+
+-- order number 추출
+SELECT (COUNT(CASE WHEN partnerIdx=? THEN 1 END)+1)AS orderNumber FROM PartnerExamines;
+
+SELECT userLocation FROM UserAreas WHERE userIdx = ?;
+DELETE FROM UserAreas WHERE userIdx = ?;
