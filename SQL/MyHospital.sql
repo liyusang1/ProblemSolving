@@ -448,9 +448,12 @@ INSERT INTO HospitalClosedDay(hospitalIdx) VALUES (?);
 ALTER TABLE Hospitals AUTO_INCREMENT 42;
 ALTER TABLE HospitalClosedDay AUTO_INCREMENT 42;
 ALTER TABLE UserAreas AUTO_INCREMENT 1;
+ALTER TABLE ExamineQuestions AUTO_INCREMENT 1;
+ALTER TABLE Examines AUTO_INCREMENT 1;
+ALTER TABLE PartnerExamines AUTO_INCREMENT 1;
 
 SELECT userIdx FROM Reviews WHERE reviewIdx = ?;
-UPDATE Reviews SET status = 0 WHERE reviewIdx = ?
+UPDATE Reviews SET status = 0 WHERE reviewIdx = ?;
 
 
     SELECT
@@ -471,7 +474,57 @@ DELETE FROM ReviewImg WHERE reviewIdx = ?;
 UPDATE Reviews SET review = ?, reviewScore = ? WHERE reviewIdx = ?;
 
 -- order number 추출
-SELECT (COUNT(CASE WHEN partnerIdx=? THEN 1 END)+1)AS orderNumber FROM PartnerExamines;
+SELECT (COUNT(CASE WHEN partnerIdx=? AND examineStatus = 0 OR examineStatus = 1 THEN 1 END)+1)
+    AS orderNumber
+FROM PartnerExamines;
 
 SELECT userLocation FROM UserAreas WHERE userIdx = ?;
 DELETE FROM UserAreas WHERE userIdx = ?;
+
+    SELECT
+
+    userIdx AS reviewUserIdx,reviewIdx,reviewScore,DATE_FORMAT(createdAt,'%Y.%m.%d')AS createdAt,review,
+    IFNULL((SELECT reviewImg FROM ReviewImg WHERE Reviews.reviewIdx = ReviewImg.reviewIdx
+        AND reviewImgIdx IN (SELECT MAX(reviewImgIdx) FROM ReviewImg WHERE Reviews.reviewIdx = ReviewImg.reviewIdx)
+    ),-1)AS reviewImg,
+    (SELECT COUNT(reviewImg) FROM ReviewImg WHERE Reviews.reviewIdx = ReviewImg.reviewIdx)AS reviewImgCount
+
+    FROM Reviews
+    WHERE hospitalIdx = ? AND status = 1 ORDER BY reviewIdx DESC LIMIT ?,?;
+
+SELECT examineQuestionIdx,questionType,examineContent FROM ExamineQuestions WHERE subjectIdx = 1 ORDER BY examineQuestionIdx;
+
+SELECT examineQuestionIdx,questionType,examineContent FROM ExamineQuestions WHERE subjectIdx = 8 ORDER BY examineQuestionIdx;
+
+INSERT INTO Examines (userIdx,subjectIdx) VALUES (?,?);
+SELECT LAST_INSERT_ID() AS examineIdx;
+
+INSERT INTO ExamineUserAnswers (examineIdx,examineQuestionIdx,examineAnswer) VALUES ?;
+
+SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(userLocation, " ", 2), " ", -1) AS userLocation FROM UserAreas WHERE userIdx = ?;
+
+
+
+SELECT hospitalIdx FROM Hospitals WHERE hospitalAddressDetail Like concat('%',?,'%') AND subjectIdx = ?;
+
+SELECT partnerIdx FROM Partners WHERE hospitalIdx = ?;
+
+INSERT INTO PartnerExamines (partnerIdx, examineIdx,examineOrder) VALUES ?;
+
+SELECT DISTINCT ExamineQuestions.examineQuestionIdx,examineContent,questionType FROM ExamineQuestions
+INNER JOIN ExamineUserAnswers ON ExamineUserAnswers.examineQuestionIdx = ExamineQuestions.examineQuestionIdx
+WHERE examineIdx = ?;
+SELECT examineAnswer FROM ExamineUserAnswers WHERE examineQuestionIdx = ? AND examineIdx = ?;
+SELECT userIdx FROM Examines WHERE examineIdx = ?;
+
+
+-- 지도 가져오기 37.5533535 127.0235435
+SELECT hospitalIdx,hospitalLatitude,hospitalLongitude,hospitalName,hospitalImg,
+       (SELECT IFNULL(ROUND(SUM(reviewScore)/COUNT(reviewIdx),1),0) FROM Reviews WHERE Reviews.hospitalIdx = hospitalIdx) AS reviewStar,
+       CONCAT(hospitalAddress," ",hospitalAddressDetail)AS hospitalAddress,
+       round((6371*acos(cos(radians(?))*cos(radians(hospitalLatitude))*cos(radians(hospitalLongitude)
+       -radians(?))+sin(radians(?))*sin(radians(hospitalLatitude)))),1)as distance
+
+FROM Hospitals
+
+WHERE hospitalAddress Like concat('%',?,'%') AND hospitalAddressDetail Like concat('%',?,'%') AND subjectIdx = ?;
