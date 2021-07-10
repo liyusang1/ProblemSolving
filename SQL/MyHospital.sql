@@ -481,16 +481,19 @@ FROM PartnerExamines;
 SELECT userLocation FROM UserAreas WHERE userIdx = ?;
 DELETE FROM UserAreas WHERE userIdx = ?;
 
+SET @rownum:=0;
     SELECT
-
-    userIdx AS reviewUserIdx,reviewIdx,reviewScore,DATE_FORMAT(createdAt,'%Y.%m.%d')AS createdAt,review,
+           @rownum:=@rownum+1 as no,userIdx AS reviewUserIdx,reviewIdx,reviewScore,DATE_FORMAT(createdAt,'%Y.%m.%d')AS createdAt,review,
     IFNULL((SELECT reviewImg FROM ReviewImg WHERE Reviews.reviewIdx = ReviewImg.reviewIdx
         AND reviewImgIdx IN (SELECT MAX(reviewImgIdx) FROM ReviewImg WHERE Reviews.reviewIdx = ReviewImg.reviewIdx)
     ),-1)AS reviewImg,
-    (SELECT COUNT(reviewImg) FROM ReviewImg WHERE Reviews.reviewIdx = ReviewImg.reviewIdx)AS reviewImgCount
+    (SELECT COUNT(reviewImg) FROM ReviewImg WHERE Reviews.reviewIdx = ReviewImg.reviewIdx)AS reviewImgCount,
+           COUNT(*) OVER () as TotalCount
 
     FROM Reviews
-    WHERE hospitalIdx = ? AND status = 1 ORDER BY reviewIdx DESC LIMIT ?,?;
+    WHERE hospitalIdx = ? AND status = 1 ORDER BY reviewIdx limit ?,?;
+
+
 
 SELECT examineQuestionIdx,questionType,examineContent FROM ExamineQuestions WHERE subjectIdx = 1 ORDER BY examineQuestionIdx;
 
@@ -528,3 +531,86 @@ SELECT hospitalIdx,hospitalLatitude,hospitalLongitude,hospitalName,hospitalImg,
 FROM Hospitals
 
 WHERE hospitalAddress Like concat('%',?,'%') AND hospitalAddressDetail Like concat('%',?,'%') AND subjectIdx = ?;
+
+
+ SELECT hospitalIdx FROM Hospitals WHERE hospitalAddressDetail Like concat('%',?,'%') AND subjectIdx = ?
+ AND hospitalAddress Like concat('%',?,'%');
+
+UPDATE Users SET userDeviceToken=? WHERE userIdx =?;
+
+SELECT COUNT(reviewIdx) AS reviewNumber FROM Reviews WHERE hospitalIdx=? AND status=1
+
+-- 우리 - 나의상태
+SELECT examineIdx,
+       (CASE subjectIdx
+           WHEN 1 then '피부과'
+           WHEN 2 then '치과'
+           WHEN 3 then '성형외과'
+           WHEN 4 then '안과'
+           WHEN 5 then '암 요양'
+           WHEN 6 then '정형외과'
+           WHEN 7 then '한의원'
+       END)AS subejct,
+       DATE_FORMAT(createdAt,'%Y.%m.%d')AS createdAt,
+       (SELECT COUNT(examineIdx) FROM Estimates WHERE Estimates.examineIdx = Examines.examineIdx) AS estimateCount
+       FROM Examines WHERE userIdx=? AND status=1
+       ORDER BY examineIdx DESC;
+-- 우리의 의견
+SELECT estimateIdx,hospitalName,hospitalLogo,
+       (SELECT IFNULL(ROUND(SUM(reviewScore)/COUNT(reviewIdx),1),0) FROM Reviews WHERE Reviews.hospitalIdx = hospitalIdx) AS reviewStar,
+       CONCAT(hospitalAddress," ",hospitalAddressDetail)AS hospitalAddress,
+       estimateCost
+
+FROM Estimates
+INNER JOIN Hospitals On Estimates.hospitalIdx=Hospitals.hospitalIdx
+WHERE userIdx=? AND estimateStatus = 0
+ORDER BY estimateIdx DESC;
+
+
+-- 견적서 상세조회
+SELECT Hospitals.hospitalIdx,
+        (CASE subjectIdx
+           WHEN 1 then '피부과'
+           WHEN 2 then '치과'
+           WHEN 3 then '성형외과'
+           WHEN 4 then '안과'
+           WHEN 5 then '암 요양'
+           WHEN 6 then '정형외과'
+           WHEN 7 then '한의원'
+       END)AS subejct,hospitalName,hospitalLogo,
+       (SELECT IFNULL(ROUND(SUM(reviewScore)/COUNT(reviewIdx),1),0) FROM Reviews WHERE Reviews.hospitalIdx = hospitalIdx) AS reviewStar,
+       CONCAT(hospitalAddress," ",hospitalAddressDetail)AS hospitalAddress,
+       DATE_FORMAT(hospitalStartTime,'%H:%i')AS hospitalStratTime,
+       DATE_FORMAT(hospitalEndTime,'%H:%i')AS hospitalEndTime,
+       estimateCost,opinion,
+       DATE_FORMAT(Estimates.createdAt,'%Y.%m.%d')AS createdAt
+
+FROM Estimates
+INNER JOIN Hospitals On Estimates.hospitalIdx=Hospitals.hospitalIdx
+WHERE estimateIdx=? AND estimateStatus = 0
+ORDER BY estimateIdx DESC;
+
+
+SELECT COUNT(1) AS CNT FROM Estimates WHERE estimateIdx = ?;
+
+SELECT reservationTime FROM Reservations WHERE DATE_FORMAT(reservationTime,'%Y') =? and DATE_FORMAT(reservationTime,'%m') = ?
+and DATE_FORMAT(reservationTime,'%d') = ?
+-- 예약 가능한 시간 확인하기
+SELECT DATE_FORMAT(reservationTime,'%H:%i')AS reservedTime
+FROM Reservations
+INNER JOIN Estimates ON Estimates.estimateIdx = Reservations.estimateIdx
+WHERE hospitalIdx = ? AND DATE_FORMAT(reservationTime,'%Y-%m-%d') =?
+
+ORDER BY reservedTime;
+
+-- 예약 확인하기 2021-07-15 18:00
+SELECT COUNT(1) AS CNT
+FROM Reservations
+INNER JOIN Estimates ON Estimates.estimateIdx = Reservations.estimateIdx
+WHERE hospitalIdx = ? AND DATE_FORMAT(reservationTime,'%Y-%m-%d %H:%i') =?;
+-- '2021-07-29 18:00' 예약하기
+INSERT INTO Reservations (estimateIdx,reservationTime) VALUES (?,?)
+
+SELECT hospitalIdx FROM Estimates WHERE estimateIdx = ?;
+
+SELECT userIdx FROM Estimates WHERE estimateIdx = ?
