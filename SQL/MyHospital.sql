@@ -594,7 +594,7 @@ ORDER BY estimateIdx DESC;
 SELECT COUNT(1) AS CNT FROM Estimates WHERE estimateIdx = ?;
 
 SELECT reservationTime FROM Reservations WHERE DATE_FORMAT(reservationTime,'%Y') =? and DATE_FORMAT(reservationTime,'%m') = ?
-and DATE_FORMAT(reservationTime,'%d') = ?
+and DATE_FORMAT(reservationTime,'%d') = ?;
 -- 예약 가능한 시간 확인하기
 SELECT DATE_FORMAT(reservationTime,'%H:%i')AS reservedTime
 FROM Reservations
@@ -609,8 +609,42 @@ FROM Reservations
 INNER JOIN Estimates ON Estimates.estimateIdx = Reservations.estimateIdx
 WHERE hospitalIdx = ? AND DATE_FORMAT(reservationTime,'%Y-%m-%d %H:%i') =?;
 -- '2021-07-29 18:00' 예약하기
-INSERT INTO Reservations (estimateIdx,reservationTime) VALUES (?,?)
+INSERT INTO Reservations (estimateIdx,reservationTime) VALUES (?,?);
 
 SELECT hospitalIdx FROM Estimates WHERE estimateIdx = ?;
 
 SELECT userIdx FROM Estimates WHERE estimateIdx = ?
+
+SELECT hospitalStartTime,hospitalEndTime,hospitalHoliday,
+       monClosed,tueClosed,wedClosed,thuClosed,friClosed,satClosed,sunClosed
+       FROM Hospitals
+INNER JOIN HospitalClosedDay ON HospitalClosedDay.hospitalIdx=Hospitals.hospitalIdx
+WHERE Hospitals.hospitalIdx = ?;
+
+CREATE TABLE ExamineAddress
+(
+    `examineIdx`            INT UNSIGNED    NOT NULL    COMMENT '문진표 인덱스',
+    `examineAddress`        VARCHAR(45)     NOT NULL    COMMENT '문진표 지역',
+    `examineAddressDetail`  VARCHAR(45)     NOT NULL    COMMENT '문진표 상세지역',
+    `createdAt`             TIMESTAMP       NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    `updatedAt`             TIMESTAMP       NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+SELECT CONCAT(examineAddress," ",examineAddressDetail)AS address FROM ExamineAddress WHERE examineIdx = ?;
+
+UPDATE Estimates SET estimateStatus=1 WHERE estimateIdx =?;
+
+SELECT userDeviceToken FROM Users WHERE userIdx =?;
+SELECT (CASE subjectIdx
+           WHEN 1 then '피부과'
+           WHEN 2 then '치과'
+           WHEN 3 then '성형외과'
+           WHEN 4 then '안과'
+           WHEN 5 then '암 요양'
+           WHEN 6 then '정형외과'
+           WHEN 7 then '한의원'
+       END)AS subejct,hospitalName FROM Hospitals
+INNER JOIN Estimates ON Estimates.hospitalIdx = Hospitals.hospitalIdx
+WHERE estimateIdx = ?;
+
+SELECT DATE_FORMAT(createdAt,'%Y-%m-%d') AS createdAt FROM Examines WHERE examineIdx =?;
