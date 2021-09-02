@@ -17,7 +17,7 @@ for _ in range(n):
     m = int(stdin.readline())
 
     count = 0
-    for i in range(3, (m // 2) + 1):
+    for i in range(2, (m // 2) + 1):
         if isPrime[i] and isPrime[m - i]:
             count += 1
     print(count)
