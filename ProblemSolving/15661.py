@@ -14,10 +14,10 @@ rightTeam = []
 
 def dfs(count, index):
     global minimum
-    if count == n // 2:
+    if count >= 2:
         rightTeam = list(set(numList) - set(leftTeam))
-        leftCom = list(itertools.combinations(leftTeam, 2))
-        rightCom = list(itertools.combinations(rightTeam, 2))
+        leftCom = list(itertools.combinations(leftTeam,2))
+        rightCom = list(itertools.combinations(rightTeam,2))
 
         leftValue = 0
         rightValue = 0
