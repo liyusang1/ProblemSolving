@@ -13,6 +13,7 @@ flag = False
 for n in range(25):
     if flag == True:
         break
+    for i in range(5):
         if flag == True:
             break
         for j in range(5):
