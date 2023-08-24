@@ -17,7 +17,7 @@ public class Programmers_호텔대실 {
 
         while (!priorityQueue.isEmpty()) {
             int[] temp = priorityQueue.remove();
-            if (rooms.peek() + 10 <= temp[0]) { //다음방의 종료시간이 다음예약의 종료시간보다 작거나 같다면 방을 더 추가할 필요가 없음
+            if (rooms.peek() + 10 <= temp[0]) { //다음방의 종료시간이 다음예약의 시작시간보다 작거나 같다면 방을 더 추가할 필요가 없음
                 rooms.remove();
                 rooms.add(temp[1]); // 새로운 종료시간 기록
             } else {
